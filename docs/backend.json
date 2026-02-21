@@ -1,0 +1,146 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile information within the 성적 메이트 application, distinct from authentication credentials handled by an external system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for contact or display purposes.",
+          "format": "email"
+        },
+        "nickname": {
+          "type": "string",
+          "description": "A user-chosen display name or nickname."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "nickname",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Course": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Course",
+      "type": "object",
+      "description": "Represents an individual academic course taken by a user, including grade and credit information, used for GPA calculation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Course entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile entity this course belongs to. (Relationship: UserProfile 1:N Course)"
+        },
+        "semesterName": {
+          "type": "string",
+          "description": "The academic semester in which the course was taken (e.g., 'Fall 2023', 'Spring 2024')."
+        },
+        "courseName": {
+          "type": "string",
+          "description": "The name or title of the academic course."
+        },
+        "credits": {
+          "type": "number",
+          "description": "The number of credit units assigned to the course."
+        },
+        "letterGrade": {
+          "type": "string",
+          "description": "The letter grade received for the course (e.g., 'A+', 'B', 'C-')."
+        },
+        "gradePoint": {
+          "type": "number",
+          "description": "The numerical grade point equivalent of the letter grade, based on a standard conversion scale (e.g., 4.5 for A+, 3.0 for B)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the course entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the course entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "semesterName",
+        "courseName",
+        "credits",
+        "letterGrade",
+        "gradePoint",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual user profile information. The document ID (`userId`) is the Firebase Authentication UID. Access is restricted to the owner (`request.auth.uid`).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/courses/{courseId}",
+        "definition": {
+          "entityName": "Course",
+          "schema": {
+            "$ref": "#/backend/entities/Course"
+          },
+          "description": "Stores academic course details for a specific user. This is a subcollection under a user's profile. Includes denormalized 'userId' field for authorization independence, which must match the parent path's 'userId' for robust security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user to whom this course belongs, matching the Firebase Authentication UID of the owner and the parent path's userId."
+            },
+            {
+              "name": "courseId",
+              "description": "The unique ID for a specific course entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and strategy mandates. It leverages a hierarchical path structure for user-owned data and denormalization for authorization independence.\n\n1.  **User Profiles (`/users/{userId}`):** Each user's profile is stored in a top-level collection `users`, with the document ID being the user's `uid` from Firebase Authentication (`request.auth.uid`). This directly implements **Path-Based ownership (C.1)** and ensures a 1:1 relationship between an authenticated user and their profile. Access rules are straightforward: a user can only read or write their own profile where `userId == request.auth.uid`.\n\n2.  **Courses (`/users/{userId}/courses/{courseId}`):** Courses are stored as subcollections under the respective user's profile. This maintains the `UserProfile 1:N Course` relationship in a clear, nested path. \n\n    **Authorization Independence (A) & QAPs (4):** To achieve authorization independence for `Course` documents and support Query-as-Permission (QAPs), the `Course` entity explicitly includes a `userId` field. This `userId` field in the course document **MUST** be denormalized and match the `{userId}` in the path. This eliminates the need for `get()` calls in security rules to check the parent `UserProfile`'s ownership. For example, a rule can simply check `request.auth.uid == userId` (from the path wildcard) AND `request.resource.data.userId == userId` (from the document's denormalized field) for writes, and `request.auth.uid == userId` for reads. This allows atomic creation/update of course documents and simplifies rule debugging. When a user queries `/users/{request.auth.uid}/courses`, the list operation is inherently scoped to their owned data, satisfying QAPs.\n\n3.  **Structural Segregation (B):** All `UserProfile` documents reside in a single top-level collection `/users`, sharing the same security posture (owner-only access). Similarly, all `Course` documents for a specific user reside in their dedicated subcollection `/users/{userId}/courses`, also sharing an owner-only security posture. There is no mixing of public/private or different access-level data within the same collection, which greatly simplifies security rules.\n\n4.  **Data Clarity (D):** Consistent naming (`userId`, `courseId`, `createdAt`, `updatedAt`) and explicit fields (`semesterName`, `letterGrade`, `gradePoint`) contribute to a predictable schema. Wildcards are descriptive, e.g., `{userId}` not just `{id}`.\n\nThis structure ensures that security rules are simple, atomic operations are feasible, and debugging is straightforward due to explicit ownership and minimal dependencies."
+  }
+}

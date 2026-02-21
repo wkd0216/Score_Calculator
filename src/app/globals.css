@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 95%;
+    --foreground: 220 40% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 15%;
+    --primary: 220 40% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 220 40% 15%;
+    --muted: 220 15% 90%;
+    --muted-foreground: 220 20% 45%;
+    --accent: 190 70% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 85%;
+    --input: 220 15% 85%;
+    --ring: 220 40% 55%;
+    --radius: 0.75rem;
+    --chart-1: 220 40% 55%;
+    --chart-2: 190 70% 45%;
+    --chart-3: 200 60% 35%;
+    --chart-4: 210 50% 65%;
+    --chart-5: 180 65% 50%;
+  }
+
+  .dark {
+    --background: 220 40% 10%;
+    --foreground: 220 20% 95%;
+    --card: 220 40% 12%;
+    --card-foreground: 220 20% 95%;
+    --popover: 220 40% 12%;
+    --popover-foreground: 220 20% 95%;
+    --primary: 220 40% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 30% 20%;
+    --secondary-foreground: 220 20% 95%;
+    --muted: 220 30% 20%;
+    --muted-foreground: 220 20% 65%;
+    --accent: 190 70% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 30% 20%;
+    --input: 220 30% 20%;
+    --ring: 220 40% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><rect fill="hsl(var(--background))" width="800" height="800"/><g fill-opacity="0.4"><circle fill="hsl(var(--primary))" cx="400" cy="400" r="200"/><circle fill="hsl(var(--secondary))" cx="400" cy="400" r="100"/></g></svg>');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+
+  }
+}
+
+@layer components {
+  .btn-glow {
+    @apply shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow duration-300;
+  }
+  .card-lifted {
+    @apply shadow-xl shadow-slate-200/50 dark:shadow-slate-800/50;
+  }
+}

@@ -1,73 +1,26 @@
-# React + TypeScript + Vite
+# 성적 메이트 (Score_Calculator)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+대학생들을 위한 쉽고 빠른 학점 계산기 서비스입니다. 일반 대학뿐만 아니라 학년제로 운영되는 의/치과 대학용 계산 기능도 포함되어 있습니다.
 
-Currently, two official plugins are available:
+## 주요 기능
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **일반 대학용 계산기**: 1~6학점 사이의 과목 입력 및 성적 계산.
+- **의/치과 대학용 계산기**: 학년제 학과를 위한 0.5~8학점(0.5단위) 세밀한 학점 입력 지원.
+- **다양한 평점 기준**: 4.5점 만점 기준 및 4.0점 만점 환산 평점 동시 제공.
+- **데이터 저장**: 입력한 성적 데이터는 브라우저의 로컬 스토리지(localStorage)를 통해 안전하게 유지됩니다. 별도의 로그인이 필요 없습니다.
+- **반응형 UI**: ShadCN UI와 Tailwind CSS를 사용하여 모바일과 데스크톱 모두에서 최적화된 경험을 제공합니다.
 
-## React Compiler
+## 실행 방법
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. 의존성 패키지 설치:
+   ```bash
+   npm install
+   ```
+2. 개발 서버 실행:
+   ```bash
+   npm run dev
+   ```
 
-## Expanding the ESLint configuration
+## 라이선스
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+이 프로젝트는 MIT 라이선스에 따라 배포됩니다.

@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY:
+     * This ruleset implements a strict Path-Based Ownership model for the "성적 메이트" (Grade Mate) application. 
+     * Security is anchored in the user's Firebase Authentication UID, which serves as the top-level 
+     * partition for all private data.
+     *
+     * DATA STRUCTURE:
+     * All data is organized hierarchically under the user:
+     * - /users/{userId}: The core profile of the user.
+     * - /users/{userId}/courses/{courseId}: Individual academic course records.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Strict Ownership: Users can only read, list, create, or modify data within their own /{userId} tree.
+     * 2. Authorization Denormalization: Course documents explicitly store the 'userId' to allow for 
+     *    independent authorization checks and to support Query-as-Permission (QAP).
+     * 3. Relational Integrity: On document creation, the rules enforce that internal ID fields 
+     *    match the document path to prevent cross-user data injection.
+     * 4. Prototyping Flexibility: These rules prioritize authorization (who can access) over schema 
+     *    validation (what the data looks like). Data types and optional fields are not enforced.
+     */
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the request is from a signed-in user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Verifies that the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Combines ownership check with document existence for destructive operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for the UserProfile entity. Users manage their own profile.
+     * @path /users/{userId}
+     * @allow (create) if auth.uid == "user_123" and request.resource.data.id == "user_123"
+     * @deny (get) if auth.uid == "user_abc" and path is /users/user_xyz
+     * @principle Path-based ownership: The document ID must match the Authenticated UID.
+     */
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+      
+      allow create: if isOwner(userId) 
+                    && request.resource.data.id == userId;
+      
+      allow update: if isExistingOwner(userId) 
+                    && request.resource.data.id == resource.data.id;
+      
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for Course entries. Nested subcollection under the owner's profile.
+       * @path /users/{userId}/courses/{courseId}
+       * @allow (list) if auth.uid == userId
+       * @deny (update) if user attempts to change the 'userId' field to another user's ID.
+       * @principle Authorization independence: Validates denormalized userId field for safety.
+       */
+      match /courses/{courseId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) 
+                      && request.resource.data.userId == userId
+                      && request.resource.data.id == courseId;
+
+        allow update: if isExistingOwner(userId) 
+                      && request.resource.data.userId == resource.data.userId
+                      && request.resource.data.id == resource.data.id;
+
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    // Default deny for any unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

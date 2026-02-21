@@ -1,0 +1,11 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "academic-banner",
+      "description": "Abstract academic background",
+      "imageUrl": "https://picsum.photos/seed/academic1/1200/400",
+      "imageHint": "university study"
+    }
+  ]
+}
