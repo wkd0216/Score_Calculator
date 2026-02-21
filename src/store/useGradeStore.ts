@@ -1,77 +1,68 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// Define the interface for a single course
+export type CalculatorType = 'general' | 'medical';
+
 export interface Course {
   id: string;
   name: string;
   credit: number;
   grade: string;
-  isMajor: boolean; // 전공 과목 여부
+  isMajor: boolean;
 }
 
-// Define the state and actions for the store
 interface GradeState {
-  courses: Course[];
-  addCourse: (course: Omit<Course, 'id'>) => void;
-  removeCourse: (id: string) => void;
-  updateCourse: (id: string, updatedCourse: Partial<Course>) => void;
-  calculateGPA: () => { gpa: number; totalCredits: number };
+  courses: {
+    [key in CalculatorType]: Course[];
+  };
+  addCourse: (course: Omit<Course, 'id'>, type: CalculatorType) => void;
+  removeCourse: (id: string, type: CalculatorType) => void;
+  updateCourse: (id: string, updatedCourse: Partial<Course>, type: CalculatorType) => void;
+  resetCourses: (type: CalculatorType) => void;
 }
-
-// Grade mapping for calculation
-const gradeToPoint: { [key: string]: number } = {
-  'A+': 4.5,
-  'A': 4.0,
-  'B+': 3.5,
-  'B': 3.0,
-  'C+': 2.5,
-  'C': 2.0,
-  'D+': 1.5,
-  'D': 1.0,
-  'F': 0,
-};
 
 export const useGradeStore = create<GradeState>()(
   persist(
-    (set, get) => ({
-      courses: [],
+    (set) => ({
+      courses: { general: [], medical: [] },
 
-      addCourse: (course) =>
+      addCourse: (course, type) =>
         set((state) => ({
-          courses: [...state.courses, { ...course, id: Date.now().toString() }],
+          courses: {
+            ...state.courses,
+            [type]: [...state.courses[type], { ...course, id: Date.now().toString() }],
+          },
         })),
 
-      removeCourse: (id) =>
-        set((state) => ({ courses: state.courses.filter((course) => course.id !== id) })),
-
-      updateCourse: (id, updatedCourse) =>
+      removeCourse: (id, type) =>
         set((state) => ({
-          courses: state.courses.map((course) =>
-            course.id === id ? { ...course, ...updatedCourse } : course
-          ),
+          courses: {
+            ...state.courses,
+            [type]: state.courses[type].filter((c) => c.id !== id),
+          },
         })),
 
-      calculateGPA: () => {
-        const { courses } = get();
-        let totalCredits = 0;
-        let totalPoints = 0;
+      updateCourse: (id, updatedCourse, type) =>
+        set((state) => ({
+          courses: {
+            ...state.courses,
+            [type]: state.courses[type].map((c) =>
+              c.id === id ? { ...c, ...updatedCourse } : c
+            ),
+          },
+        })),
 
-        courses.forEach((course) => {
-          if (course.credit > 0 && course.grade in gradeToPoint) {
-            totalCredits += course.credit * 1;
-            totalPoints += course.credit * gradeToPoint[course.grade];
-          }
-        });
-
-        const gpa = totalCredits === 0 ? 0 : totalPoints / totalCredits;
-        return { gpa: parseFloat(gpa.toFixed(2)), totalCredits };
-      },
+      resetCourses: (type) =>
+        set((state) => ({
+          courses: {
+            ...state.courses,
+            [type]: [],
+          },
+        })),
     }),
     {
-      name: 'grade-mate-storage', // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
-      partialize: (state) => ({ courses: state.courses }), // persist only the 'courses' state
+      name: 'grade-mate-storage-v2', // 로컬 스토리지 키 변경
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

@@ -70,9 +70,15 @@
 
 @layer components {
   .btn-glow {
-    @apply shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow duration-300;
+    @apply shadow-lg shadow-accent/20 hover:shadow-accent/40 transition-shadow duration-300;
   }
   .card-lifted {
-    @apply shadow-xl shadow-slate-200/50 dark:shadow-slate-800/50;
+    @apply shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50;
+  }
+  .card-glow-primary {
+    box-shadow: 0 0 20px 0px hsla(var(--primary), 0.3);
+  }
+  .card-glow-accent {
+    box-shadow: 0 0 20px 0px hsla(var(--accent), 0.3);
   }
 }
